@@ -38,5 +38,9 @@
 - name: Start SSSD and autofs services
   ansible.builtin.import_tasks: services.yml
 
+# Verification checks the outcome of the changes above, which --check does not
+# make: its skipped probes return empty output, so the group check always
+# fails a dry run.  Verify only on real runs.
 - name: Verify SSSD identity resolution
   ansible.builtin.import_tasks: verify.yml
+  when: not ansible_check_mode
