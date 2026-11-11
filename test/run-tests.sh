@@ -505,8 +505,10 @@ test_autofs_kerberos() {
         ssh_client "echo 'Wr1terPass!234' | kinit perm_writer@SAMBA.TEST"
     run_test "Trigger autofs mount of public share and verify NFS" \
         ssh_client "ls /data/public/ && mount | grep 'public.*nfs4'"
-    run_test "Autofs NFS mount carries the role's nconnect default" \
-        ssh_client "grep -E ' /data/public nfs4 .*nconnect=4' /proc/mounts"
+    # nconnect > 1 reorders RPCSEC_GSS sequence numbers past the server's
+    # window, so the role must not set it by default on these Kerberos mounts.
+    run_test "Autofs NFS mount uses a single connection by default" \
+        ssh_client "grep -E ' /data/public nfs4 ' /proc/mounts | grep -vq 'nconnect='"
     # The flavour the client actually negotiated, not just the one the map
     # asks for: a weakened export + map pair would still mount and serve.
     run_test "Autofs public mount negotiated sec=krb5p" \
